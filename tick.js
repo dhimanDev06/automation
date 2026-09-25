@@ -157,3 +157,37 @@
     console.error("Script failed:", err);
   }
 })();
+
+
+(async () => {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    
+    // 1. Find and click the summary page Continue button
+    let finalContinueBtn = null;
+    for (let i = 0; i < 50; i++) {
+        await sleep(250);
+        finalContinueBtn = [...document.querySelectorAll('button.btnDefault.train_Search[type="submit"]')]
+            .find(el => el.textContent.includes('Continue'));
+        
+        if (finalContinueBtn) {
+            finalContinueBtn.click();
+            break;
+        }
+    }
+    if (!finalContinueBtn) return console.error("❌ Summary Continue button not found.");
+
+    // 2. Wait for the payment layout redirection to load and select Wallets / Cash Card
+    let walletBtn = null;
+    for (let i = 0; i < 50; i++) {
+        await sleep(250);
+        walletBtn = [...document.querySelectorAll('#pay-type .bank-type')]
+            .find(el => el.textContent.includes('Wallets / Cash Card'));
+        
+        if (walletBtn) {
+            walletBtn.click();
+            console.log("✔ Wallets / Cash Card option successfully clicked.");
+            break;
+        }
+    }
+    if (!walletBtn) console.error("❌ Wallets option timeline timeout.");
+})();

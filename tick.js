@@ -14,6 +14,27 @@
 
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+  async function selectPassenger(input, keyword) {
+    input.focus();
+    input.value = keyword[0];
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+
+    for (let i = 0; i < 30; i++) {
+      await sleep(200);
+      const opt = [...document.querySelectorAll('li[role="option"], .ui-autocomplete-list-item')]
+        .find(el => el.textContent.toLowerCase().includes(keyword.toLowerCase()));
+      if (opt) {
+        opt.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        opt.click();
+        console.log(`Passenger ${keyword} selected!`);
+        return true;
+      }
+    }
+    console.warn(`Passenger ${keyword} not found`);
+    return false;
+  }
+
   try {
     // Step 1: Login/Register
     const loginBtn = await waitFor('a.search_btn.loginText[aria-label="Click here to Login in application"]');
@@ -39,6 +60,42 @@
     from.dispatchEvent(new Event('input', { bubbles: true }));
     to.dispatchEvent(new Event('input', { bubbles: true }));
     console.log("Stations filled");
+
+    // Step 3b: Date (always next day via datepicker popup)
+    const dateInput = await waitFor('span.ui-calendar input[placeholder]');
+    dateInput.click(); // open the calendar popup
+    await sleep(500);
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const targetDay = tomorrow.getDate();
+    const targetMonth = tomorrow.toLocaleString('default', { month: 'long' });
+    const targetYear = tomorrow.getFullYear();
+
+    // Ensure calendar shows correct month/year
+    for (let i = 0; i < 12; i++) {
+      const monthEl = document.querySelector('.ui-datepicker-month');
+      const yearEl = document.querySelector('.ui-datepicker-year');
+      if (monthEl && yearEl &&
+          monthEl.textContent.includes(targetMonth) &&
+          yearEl.textContent.includes(targetYear.toString())) {
+        break;
+      }
+      // click next month
+      const nextBtn = document.querySelector('.ui-datepicker-next');
+      if (nextBtn) nextBtn.click();
+      await sleep(300);
+    }
+
+    // Click the correct day cell
+    const dayCell = [...document.querySelectorAll('.ui-datepicker-calendar td a')]
+      .find(el => el.textContent.trim() === targetDay.toString());
+    if (dayCell) {
+      dayCell.click();
+      console.log("Journey date set to:", tomorrow.toDateString());
+    } else {
+      throw "Could not find day cell for " + targetDay;
+    }
 
     // Step 4: Quota
     const dq = await waitFor('#journeyQuota .ui-dropdown-trigger');
@@ -76,7 +133,7 @@
     for (let i = 0; i < 30; i++) {
       await sleep(300);
       const match = [...card.querySelectorAll('.pre-avl')]
-        .find(el => el.textContent.includes('AVAILABLE') && !el.textContent.includes('#'));
+        .find(el => el.textContent.includes('AVAILABLE') && !el.textContent.includes('NOT') && !el.textContent.includes('#'));
       if (match) {
         match.click();
         await sleep(150);
@@ -94,22 +151,7 @@
       await sleep(250);
     }
     if (!input1) throw "Passenger input not found";
-
-    input1.focus();
-    input1.value = 'd';
-    input1.dispatchEvent(new Event('input', { bubbles: true }));
-
-    for (let i = 0; i < 30; i++) {
-      await sleep(200);
-      const opt = [...document.querySelectorAll('li[role="option"], .ui-autocomplete-list-item')]
-        .find(el => el.textContent.toLowerCase().includes('dhiman'));
-      if (opt) {
-        opt.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-        opt.click();
-        console.log("Passenger Dhiman selected!");
-        break;
-      }
-    }
+    await selectPassenger(input1, "Dhiman");
 
     await sleep(400);
 
@@ -125,22 +167,7 @@
     const inputs = document.querySelectorAll('input[placeholder*="Full Name"]');
     const input2 = inputs[1];
     if (!input2) throw "Second passenger input not found";
-
-    input2.focus();
-    input2.value = 's';
-    input2.dispatchEvent(new Event('input', { bubbles: true }));
-
-    for (let i = 0; i < 30; i++) {
-      await sleep(200);
-      const opt = [...document.querySelectorAll('li[role="option"], .ui-autocomplete-list-item')]
-        .find(el => el.textContent.toLowerCase().includes('susmita'));
-      if (opt) {
-        opt.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-        opt.click();
-        console.log("Passenger Susmita selected!");
-        break;
-      }
-    }
+    await selectPassenger(input2, "Susmita");
 
     // Step 11: Continue
     await sleep(400);

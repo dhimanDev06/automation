@@ -162,7 +162,11 @@
 (async () => {
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     
-    // 1. Find and click the summary page Continue button
+    console.log("🚀 Starting continuous IRCTC/Booking checkout automation...");
+
+    // ==========================================
+    // STEP 1: Click the summary page Continue button
+    // ==========================================
     let finalContinueBtn = null;
     for (let i = 0; i < 50; i++) {
         await sleep(250);
@@ -171,12 +175,15 @@
         
         if (finalContinueBtn) {
             finalContinueBtn.click();
+            console.log("✔ Summary Continue button clicked.");
             break;
         }
     }
     if (!finalContinueBtn) return console.error("❌ Summary Continue button not found.");
 
-    // 2. Wait for the payment layout redirection to load and select Wallets / Cash Card
+    // ==========================================
+    // STEP 2: Select the "Wallets / Cash Card" category panel
+    // ==========================================
     let walletBtn = null;
     for (let i = 0; i < 50; i++) {
         await sleep(250);
@@ -185,9 +192,50 @@
         
         if (walletBtn) {
             walletBtn.click();
-            console.log("✔ Wallets / Cash Card option successfully clicked.");
+            console.log("✔ Wallets / Cash Card category option clicked.");
             break;
         }
     }
-    if (!walletBtn) console.error("❌ Wallets option timeline timeout.");
+    if (!walletBtn) return console.error("❌ Wallets option timeline timeout.");
+
+    // Optional brief sleep step to accommodate Angular view switching states
+    await sleep(400);
+
+    // ==========================================
+    // STEP 3: Select the specific "Amazonpay Wallet" option
+    // ==========================================
+    let amazonPayBtn = null;
+    for (let i = 0; i < 50; i++) {
+        await sleep(250);
+        const spanEl = [...document.querySelectorAll('span.col-pad')]
+            .find(el => el.textContent.includes('Amazonpay Wallet'));
+        
+        if (spanEl) {
+            // Safe fallback checking outer wrapper elements carrying framework click event configurations
+            amazonPayBtn = spanEl.closest('.link') || spanEl.closest('.bank-text') || spanEl;
+            amazonPayBtn.click();
+            console.log("✔ Amazonpay Wallet option successfully selected.");
+            break;
+        }
+    }
+    if (!amazonPayBtn) return console.error("❌ Amazonpay Wallet option not found.");
+
+    await sleep(300);
+
+    // ==========================================
+    // STEP 4: Click the final "Pay & Book" button
+    // ==========================================
+    let payBookBtn = null;
+    for (let i = 0; i < 50; i++) {
+        await sleep(250);
+        payBookBtn = [...document.querySelectorAll('button.btn-primary')]
+            .find(el => el.textContent.includes('Pay & Book'));
+        
+        if (payBookBtn) {
+            payBookBtn.click();
+            console.log("✔ Pay & Book button successfully clicked.");
+            break;
+        }
+    }
+    if (!payBookBtn) console.error("❌ Pay & Book button not found.");
 })();
